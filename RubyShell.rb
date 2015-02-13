@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 
+class Command < Contracted
+
+end
+
 class RubyShell
 
 	@history
