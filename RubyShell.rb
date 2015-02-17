@@ -149,6 +149,13 @@ class RubyShell
     #TODO output redirection to file (> or >>) follows all commands
     #TODO output redirection to file (> or >>) precedes optional backgrounder (&)
 
+    arrayStrings = Contract.new(
+        "param must be array of strings",
+        Proc.new do |param|
+          param.is_a?(Array) && !(param.any? { |val| !val.is_a?(String)})
+        end
+    )
+
     addPrecondition(:builtin?, takesString)
 
     addPrecondition(:add_builtin, takesStringRunnable)
@@ -158,10 +165,58 @@ class RubyShell
     addPrecondition(:execute, takesString)
 
     addPrecondition(:parse_pipeline, redirectOperator)
+
+    addPrecondition(:construct_pipeline, arrayStrings)
   end
 
   def addPostconditions
 
+    trueFalse = Contract.new(
+      "must return true or false",
+      Proc.new do |result|
+        result == !!result
+      end
+    )
+
+    procNil = Contract.new(
+        "must return Proc or nil",
+        Proc.new do |result|
+          result.is_a?(Proc) || result.nil?
+        end
+    )
+
+    trimmedString = Contract.new(
+        "must return trimmed string",
+        Proc.new do |result|
+          result.is_a?(String) && result.strip.length == result.length
+        end
+    )
+
+    arrayStrings = Contract.new(
+        "result must be array of strings",
+        Proc.new do |result|
+          result.is_a?(Array) && !(result.any? { |val| !val.is_a?(String)})
+        end
+    )
+
+    arrayCommands = Contract.new(
+        "result must be array of commands",
+        Proc.new do |result|
+          result.is_a?(Array) && !(result.any? { |val| !val.is_a?(Command)})
+        end
+    )
+
+    #TODO commands each has .in.eof? true and .out.eof? false
+
+    addPostcondition(:builtin?, trueFalse)
+
+    addPostcondition(:get_builtin, procNil)
+
+    addPostcondition(:get_cmdline, trimmedString)
+
+    addPostcondition(:parse_pipeline, arrayStrings)
+
+    addPostcondition(:construct_pipeline, arrayCommands)
   end
 
   def addInvariants
@@ -176,11 +231,17 @@ class RubyShell
     builtinsStringProc = Contract.new(
         "builtins must be a hash of Strings to Procs",
         Proc.new do
-          @builtins.any?
+          pass = true
+          @builtins.each_pair do |key, val|
+            pass &= key.is_a?(String)
+            pass &= val.is_a?(Proc)
+          end
+          pass
         end
     )
 
     addInvariant(builtinsHash)
+    addInvariant(builtinsStringProc)
   end
 
 end
