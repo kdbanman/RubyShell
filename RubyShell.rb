@@ -1,3 +1,4 @@
+require 'readline'
 require './contracted'
 require './command'
 
@@ -5,20 +6,28 @@ class RubyShell
 
 	private
 
-	@history
 	@builtins
 
 	public
 
 	def initialize
-		@history = Array.new
+    super
+
+    addPreconditions
+    addPostconditions
+    addInvariants
+
+    @builtins = Hash.new
 	end
 
 	# main shell REPL
+  # pre @builtins is a hash
+  # post none
 	def run
+
 		loop do
-			cmdline = get_cmdline()
-			@history.push(cmdline)
+      #TODO catch ContractFailure
+			cmdline = get_cmdline() # may exit program
 			execute(cmdline) if (valid_syntax(cmdline))
 		end
 	end
@@ -27,29 +36,37 @@ class RubyShell
 
 	# gets a line of raw, unexpanded shell commands.
 	# may contain pipes, output redirection, etc.
+  # pre none
+  # post returns either string or nil, string trimmed of whitespace
 	def get_cmdline
+    #TODO catch ctrl c and IOexception (see Readline website)
+    cmdline = Readline.readline("+> ", true)
+    exit if cmdline == nil
 
-		$stdout.print '+> '
-				
-		# TODO multiline input, history navigation, etc should go here.
-		# TODO how do we intercept up/down to navigate history
-		# TODO how do we actually display a history item
+    line.strip
+  end
 
-		$stdin.gets.strip
+  # executes a string of raw input
+  # pre takes a string (deeper contractual requirements are in deeper method calls)
+  # post none
+  def execute(cmdline)
 
-	end
+    raw_pipeline = parse_pipeline(cmdline)
+    cmd_pipeline = construct_pipeline(raw_pipeline)
 
-	# verifies:
-	# - trimmed of whitespace
-	# - at most one output redirection to file
-	# - output redirection to file (> or >>) follows all commands
-	# - output redirection to file (> or >>) precedes optional backgrounder (&)
-	def valid_syntax(cmdline)
-		true #TODO this should be precondition to execute!!
-	end
+    cmd_pipeline.each do |command|
+      command.execute
+    end
+
+    # TODO see Kernel::trap() for ctrl+c & others
+  end
 
 	# takes a line of command input and returns an array split on pipe characters
 	# (does not split on pipe characters enclosed by quotes)
+  # pre at most one output redirection to file (/ > [^\s]+/)
+  #     output redirection to file (> or >>) follows all commands
+  #     output redirection to file (> or >>) precedes optional backgrounder (&)
+  # post returns array of strings
 	def parse_pipeline(cmdline)
 		cmdline.scan( /([^"'|]+)|["']([^"']+)["']/ ).flatten.compact
 	end
@@ -57,32 +74,33 @@ class RubyShell
 	# takes an array of command strings and maps them to an array of Commands
 	# Commands are piped together with cmd[k].out chained to cmd[k+1].in
 	# using IO.pipe
+  # pre takes array of strings, IO.pipe returns array of IO
+  # post returns array of Commands, each has .in.eof? true and .out.eof? false
+  #      each command is tainted
 	def construct_pipeline(raw_pipeline)
 		pipeline = raw_pipeline.collect { |raw_cmd| Command.new(raw_cmd) }
 
-		# leave first command input as default stdin, last command output as
-		# default stdout.  chain the rest together.
+		# leave first command input and last command output alone. i.e. as
+		# constructed by Command.new.  chain the rest together with pipes.
 		(1...pipeline.length).each do |idx|
 			rd, wr = IO.pipe
 			pipeline[idx - 1].out = wr
 			pipeline[idx].in = rd
 		end
 
-		# TODO: ENV sub hint:
-		# 'Is SHELL your preferred shell?'.sub(/[[:upper:]]{2,}/, ENV)
 		pipeline
 	end
 
-	def execute(cmdline)
+  def addPreconditions
 
-		raw_pipeline = parse_pipeline(cmdline)
-		cmd_pipeline = construct_pipeline(raw_pipeline)
+  end
 
-		
-		cmd_pipeline.each do |command|
-			command.execute
-		end
-		# TODO see Kernel::trap() for ctrl+c & others
-	end
+  def addPostconditions
+
+  end
+
+  def addInvariants
+
+  end
 
 end
