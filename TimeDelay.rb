@@ -1,7 +1,7 @@
 require './contracted.rb'
 require './TimerContracts.rb'
 
-class TimeDelay
+class TimeDelay < Contracted
 
 	def initialize
 		addPreconditions
