@@ -18,7 +18,29 @@ class RubyShell
     addInvariants
 
     @builtins = Hash.new
-	end
+  end
+
+  # tests if program is a builtin
+  # pre program is a string containing no whitespace
+  # post returns true or false
+  def builtin?(program)
+    @builtins.has_key?(program.strip)
+  end
+
+  # registers a builtin program
+  # pre program is a string containing no whitespace
+  #     runnable is a lambda proc taking the arguments for the builtin
+  # post none
+  def add_builtin(program, runnable)
+    @builtins.store(program, runnable)
+  end
+
+  # returns a runnable proc corrensponding to the program
+  # pre program is o string containing no whitespace
+  # post returns a proc or nil
+  def get_builtin(program)
+    @builtins[program]
+  end
 
 	# main shell REPL
   # pre @builtins is a hash
@@ -28,7 +50,7 @@ class RubyShell
 		loop do
       #TODO catch ContractFailure
 			cmdline = get_cmdline() # may exit program
-			execute(cmdline) if (valid_syntax(cmdline))
+			execute(cmdline)
 		end
 	end
 
@@ -43,7 +65,7 @@ class RubyShell
     cmdline = Readline.readline("+> ", true)
     exit if cmdline == nil
 
-    line.strip
+    cmdline.strip
   end
 
   # executes a string of raw input
@@ -68,7 +90,7 @@ class RubyShell
   #     output redirection to file (> or >>) precedes optional backgrounder (&)
   # post returns array of strings
 	def parse_pipeline(cmdline)
-		cmdline.scan( /([^"'|]+)|["']([^"']+)["']/ ).flatten.compact
+		cmdline.scan( /([^"'|]+)|["']([^"']+)["']/ ).flatten.compact.collect { |cmd| cmd.strip }
 	end
 
 	# takes an array of command strings and maps them to an array of Commands
@@ -78,7 +100,13 @@ class RubyShell
   # post returns array of Commands, each has .in.eof? true and .out.eof? false
   #      each command is tainted
 	def construct_pipeline(raw_pipeline)
-		pipeline = raw_pipeline.collect { |raw_cmd| Command.new(raw_cmd) }
+		pipeline = raw_pipeline.collect do |raw_cmd|
+      if builtin? raw_cmd
+        Command.new(raw_cmd, get_builtin(raw_cmd))
+      else
+        Command.new(raw_cmd)
+      end
+    end
 
 		# leave first command input and last command output alone. i.e. as
 		# constructed by Command.new.  chain the rest together with pipes.

@@ -18,7 +18,7 @@ class Command < Contracted
   #   "cat file.txt"
   #   "echo $PATH"
   #   "grep "a | b" > file.txt &"
-  def initialize(raw)
+  def initialize(raw, runnable = nil)
     super
 
     addPreconditions
@@ -77,7 +77,7 @@ class Command < Contracted
         @in.close
       end
 
-      exec @program, *@args
+      exec @program, *@args # TODO detect if passed runnable proc, run that if so
     end
 
     @out.close unless @out == $stdout
