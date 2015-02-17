@@ -86,16 +86,111 @@ class Command < Contracted
     Process.wait pid unless @is_background
   end
 
-  def addPreconditions
+  #################################################
+  ################### CONTRACTS ###################
+  #################################################
 
+
+  def addPreconditions
+    takesString = Contract.new(
+      "parameter must be a string",
+      Proc.new do |raw|
+        raw.is_a? String
+      end
+    )
+
+    trailingAmpersand = Contract.new(
+      "input string must have zero or one trailing ampersand",
+      Proc.new do |raw|
+        tmp = raw.sub(/\s+&$/, '')
+        !(tmp =~ /\s+&$/)
+      end
+    )
+
+    redirectOperator = Contract.new(
+        "input string must have zero or one file redirect operations",
+        Proc.new do |raw|
+          tmp = raw.sub(/ >>?\s+[^\s]+/, '')
+          !(tmp =~ / >>?\s+[^\s]+/)
+        end
+    )
+
+    safeMode = Contract.new(
+        "execution must happen in $SAFE level 4",
+        Proc.new do |raw|
+          $SAFE == 4
+        end
+    )
+
+    addPrecondition(:substitute_vars, takesString)
+
+    addPrecondition(:extract_background, takesString)
+    addPrecondition(:extract_background, trailingAmpersand)
+
+    addPrecondition(:extract_io, takesString)
+    addPrecondition(:extract_io, redirectOperator)
+
+    addPrecondition(:execute, safeMode)
   end
 
   def addPostconditions
 
+    returnString = Contract.new(
+        "return must be a string",
+        Proc.new do |result|
+          result.is_a? String
+        end
+    )
+
+    noVariables = Contract.new(
+        "expanded string must not contain environment variables",
+        Proc.new do |result|
+          !(result =~ /\$[^\s]+/)
+        end
+    )
+
+    noBackgrounder = Contract.new(
+        "result string must have zero trailing ampersand",
+        Proc.new do |result|
+          !(result =~ /\s+&$/)
+        end
+    )
+
+    noRedirect = Contract.new(
+        "result string must have zero file redirect operations",
+        Proc.new do |result|
+          !(result =~ / >>?\s+[^\s]+/)
+        end
+    )
+
+    ioResponse = Contract.new(
+        "object .in and .out must respond to read and write, respectively",
+        Proc.new do
+          @in.respond_to?(:read) && @out.respond_to?(:write)
+        end
+    )
+
+    addPostcondition(:substitute_vars, returnString)
+    addPostcondition(:substitute_vars, noVariables)
+
+    addPostcondition(:extract_background, returnString)
+    addPostcondition(:extract_background, noBackgrounder)
+
+    addPostcondition(:extract_io, returnString)
+    addPostcondition(:extract_io, noRedirect)
+    addPostcondition(:extract_io, ioResponse)
+
   end
 
   def addInvariants
+    tainted = Contract.new(
+        "Command must be tainted",
+        Proc.new do |raw|
+          tainted?
+        end
+    )
 
+    addInvariant(tainted)
   end
 
 end

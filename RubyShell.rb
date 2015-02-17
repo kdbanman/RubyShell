@@ -119,8 +119,45 @@ class RubyShell
 		pipeline
 	end
 
-  def addPreconditions
+  #################################################
+  ################### CONTRACTS ###################
+  #################################################
 
+  def addPreconditions
+    takesString = Contract.new(
+        "parameter must be a string",
+        Proc.new do |program|
+          program.is_a? String
+        end
+    )
+
+    takesStringRunnable = Contract.new(
+        "parameters must be a string and a proc",
+        Proc.new do |program, runnable|
+          program.is_a?(String) && runnable.is_a?(Proc)
+        end
+    )
+
+    redirectOperator = Contract.new(
+        "entire command must have zero or one file redirect operations",
+        Proc.new do |raw|
+          tmp = raw.sub(/ >>?\s+[^\s]+/, '')
+          !(tmp =~ / >>?\s+[^\s]+/)
+        end
+    )
+
+    #TODO output redirection to file (> or >>) follows all commands
+    #TODO output redirection to file (> or >>) precedes optional backgrounder (&)
+
+    addPrecondition(:builtin?, takesString)
+
+    addPrecondition(:add_builtin, takesStringRunnable)
+
+    addPrecondition(:get_builtin, takesString)
+
+    addPrecondition(:execute, takesString)
+
+    addPrecondition(:parse_pipeline, redirectOperator)
   end
 
   def addPostconditions
@@ -129,6 +166,21 @@ class RubyShell
 
   def addInvariants
 
+    builtinsHash =  Contract.new(
+        "builtins must be a hash",
+        Proc.new do
+          @builtins.is_a? Hash
+        end
+    )
+
+    builtinsStringProc = Contract.new(
+        "builtins must be a hash of Strings to Procs",
+        Proc.new do
+          @builtins.any?
+        end
+    )
+
+    addInvariant(builtinsHash)
   end
 
 end
