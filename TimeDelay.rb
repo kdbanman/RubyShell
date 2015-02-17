@@ -34,6 +34,4 @@ class TimeDelay < Contracted
 
 		addPostcondition(:delay, timeElapsedGreaterThanInput)
 	end
-
-
 end
