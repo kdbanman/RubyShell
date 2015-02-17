@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require './RubyShell.rb'
+
+shell = RubyShell.new
+shell.run
