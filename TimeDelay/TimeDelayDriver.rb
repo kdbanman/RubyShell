@@ -7,6 +7,7 @@ class TimeDelayDriver < Contracted
 	attr_reader :time
 
 	def initialize
+		super
 		addPreconditions
 		addPostconditions
 	end

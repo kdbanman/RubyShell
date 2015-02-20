@@ -1,10 +1,10 @@
 module TimerContracts
-	inputIsInteger = Proc.new do |input|
-		input.is_a? Integer 
+	INPUTISINTEGER = Proc.new do |input|
+		input.is_a? Integer
 	end
 
-	inputIsPositive = Proc.new do |input|
-		input > 0
+	INPUTISPOSITIVE = Proc.new do |input|
+		input >= 0
 	end
 
 	inputIsString = Proc.new do |input|

@@ -1,0 +1,1 @@
+int delay(unsigned int, unsigned long);

@@ -1,4 +1,4 @@
-swig -ruby clock.i
+swig -ruby delay.i
 ruby extconf.rb 
 make
 
