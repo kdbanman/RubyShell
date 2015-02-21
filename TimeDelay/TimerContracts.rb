@@ -7,7 +7,7 @@ module TimerContracts
 		input >= 0
 	end
 
-	inputIsString = Proc.new do |input|
+	INPUTISSTRING = Proc.new do |input|
 		input.is_a? String
 	end
 
