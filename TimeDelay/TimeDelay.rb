@@ -45,7 +45,3 @@ class TimeDelay < Contracted
 		# addPostcondition(:delay, timeElapsedGreaterThanInput)
 	end
 end
-
-d = ContractRunner.new(TimeDelay.new)
-d.delay(3, 1)
-puts "Hello"
