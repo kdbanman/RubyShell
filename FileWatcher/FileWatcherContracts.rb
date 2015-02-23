@@ -1,22 +1,32 @@
+require "./contracted"
+
 module FileWatcherContracts
-	isDirectory = Proc.new do |input|
-		File.directory?(input)
+	def FileWatcherContracts.isDirectory(input, msg) 
+		input.each do |f|
+			failContract(msg) unless File.directory?(f)
+		end
 	end
 
-	isPipe = Proc.new do |input|
-		File.pipe?(input)
+	def FileWatcherContracts.pathExists (input, msg)
+		input.each do |f|
+			failContract(msg) unless File.exists?(f)
+		end
 	end
 
-	isSimpleFile = Proc.new do |input|
-		File.file?(input)
+	def FileWatcherContracts.inputsAreIntegers(msg, *inputs)
+		inputs.each do |i|
+			failContract(msg) unless i.is_a? Integer
+		end
 	end
 
-	pathExists = Proc.new do |input|
-		File.exists?(input)
+	def FileWatcherContracts.inputsArePositive(msg, *inputs)
+		inputs.each do |i|
+			failContract(msg) unless i >= 0
+		end
 	end
 
-	isCallable = Proc.new do |input|
-		input.respond_to? :call
-	end
+	def FileWatcherContracts.failContract(errMsg)
+        ::Kernel.raise ::ContractFailure, errMsg
+    end
 
 end

@@ -1,4 +1,5 @@
 require './FileWatcher/FileWatcher.rb'
+require './FileWatcher/FileWatcherContracts.rb'
 require './contracted.rb'
 require 'getoptlong'
 
@@ -7,8 +8,7 @@ class FileWatcherDriver < Contracted
 	attr_reader :actions
 
 	def initialize
-		addPreconditions
-		addPostConditions
+		super
 		@seconds = 0
 		@nanoseconds = 0
 		@actions = []
@@ -22,7 +22,6 @@ class FileWatcherDriver < Contracted
 			['-d', GetoptLong::NO_ARGUMENT]
 		)
 		parseArgs
-		runActions
 	end	
 
 	def parseArgs
@@ -83,56 +82,44 @@ OPTIONS:
 	end
 
 	def watchCreations(path)
+		FileWatcherContracts.pathExists(path, "Path Must Exist to watch Creations")
+		FileWatcherContracts.isDirectory(path, "Can only watch for creations on Directories")
+
 		f = FileWatch.new
 		f.creation(@seconds, @nanoseconds, @paths) {puts @message || "File Created"}
 	end
 
 	def watchDeletions(path)
+		FileWatcherContracts.pathExists(path, "Path Must Exist to watch deletions")
+		FileWatcherContracts.isDirectory(path, "Can only watch for deletions on Directories")
+
 		f = FileWatch.new
 		f.destroy(@seconds, @nanoseconds, @paths) {puts @message || "File Deleted"}
 	end
 
 	def watchAlterations(path)
+		FileWatcherContracts.pathExists(path, "Path Must Exist to watch alterations")
+
 		f = FileWatch.new
 		f.alter(@seconds, @nanoseconds, @paths) {puts @message || "File Altered"}
 	end
 
 	def runActions
+		begin
+			FileWatcherContracts.inputsAreIntegers("All times must be integers", @seconds, @nanoseconds)
+			FileWatcherContracts.inputsArePositive("All times must be positive", @seconds, @nanoseconds)
+		rescue ContractFailure
+			puts $!.message
+			exit(0)
+		end	
+
 		@actions.each do |action|
 			puts action
-			fork {self.send(action, @paths)}
+			fork {ContractRunner.new(self).send(action, @paths)}
 		end
-	end
-
-	def addPreconditions
-		# isDirectory = Contract.new(
-		# 	"Can only watch creations on directories",
-		# 	FileWatcherContracts.isDirectory
-		# )
-
-		# validPath = Contract.new(
-		# 	"All paths must exist in the files system",
-		# 	FileWatcherContracts.pathExists
-		# )
-
-		# simpleFile = Contract.new(
-		# 	"Path must lead to a regular file",
-		# 	FileWatcherContracts.isSimpleFile
-		# )
-
-		# addPrecondition(:watchCreations, validPath)
-		# addPrecondition(:watchCreations, isDirectory)
-
-		# addPrecondition(:watchDeletions, validPath)
-		# addPrecondition(:watchDeletions, isDirectory)
-
-		# addPrecondition(:watchAlterations, validPath)
-		# addPrecondition(:watchAlterations, simpleFile)
-	end
-
-	def addPostConditions
 	end
 
 end
 
-FileWatcherDriver.new
+fw = FileWatcherDriver.new
+fw.runActions
