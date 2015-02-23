@@ -12,7 +12,7 @@ class FileWatch
 		end
 	end
 
-	def creation(sec, nano, *args, &block)
+	def creation(sec, nano, args, &block)
 		notifier = INotify::Notifier.new
 		args.each do |path|
 			notifier.watch(path, :moved_to, :create) do
@@ -24,7 +24,7 @@ class FileWatch
 		notifier.run
 	end
 
-	def alter(sec, nano, *args, &block)
+	def alter(sec, nano, args, &block)
 		notifier = INotify::Notifier.new
 		args.each do |path|
 			notifier.watch(path, :access, :attrib, :modify, :delete) do
@@ -36,7 +36,7 @@ class FileWatch
 		notifier.run
 	end
 
-	def destroy(sec, nano, *args, &block)
+	def destroy(sec, nano, args, &block)
 		notifier = INotify::Notifier.new
 		args.each do |path|
 			notifier.watch(path, :delete) do

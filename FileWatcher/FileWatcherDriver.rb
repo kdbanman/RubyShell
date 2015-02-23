@@ -9,6 +9,8 @@ class FileWatcherDriver < Contracted
 	def initialize
 		addPreconditions
 		addPostConditions
+		@seconds = 0
+		@nanoseconds = 0
 		@actions = []
 		@opts = GetoptLong.new(
 			['--help', '-h', GetoptLong::NO_ARGUMENT],
@@ -34,16 +36,16 @@ class FileWatcherDriver < Contracted
 				case opt
 					when '--help'
 					puts <<-eof
-					FileWatcherDriver [OPTIONS]
+FileWatcherDriver [OPTIONS] path1, path2, ... pathn
 
-					OPTIONS:
-					========
-					-s <seconds>
-					-n <nanoseconds>
-					-m <msg to print>
-					-c (Watch for creations)
-					-a (Watch for alterations)
-					-d (Watch for deletions)
+OPTIONS:
+========
+-s <seconds>
+-n <nanoseconds>
+-m <msg to print>
+-c (Watch for creations)
+-a (Watch for alterations)
+-d (Watch for deletions)
 					eof
 					exit(0)
 					when '-s'
@@ -81,23 +83,24 @@ class FileWatcherDriver < Contracted
 	end
 
 	def watchCreations(path)
-		f = FileWatcher.new
-		f.creation(@seconds, @nanoseconds, @paths) {puts @message}
+		f = FileWatch.new
+		f.creation(@seconds, @nanoseconds, @paths) {puts @message || "File Created"}
 	end
 
 	def watchDeletions(path)
-		f = FileWatcher.new
-		f.destroy(@seconds, @nanoseconds, @paths) {puts @message}
+		f = FileWatch.new
+		f.destroy(@seconds, @nanoseconds, @paths) {puts @message || "File Deleted"}
 	end
 
 	def watchAlterations(path)
-		f = FileWatcher.new
-		f.alter(@seconds, @nanoseconds, @paths) {puts @message}
+		f = FileWatch.new
+		f.alter(@seconds, @nanoseconds, @paths) {puts @message || "File Altered"}
 	end
 
 	def runActions
 		@actions.each do |action|
-			fork {self.action(@paths)}
+			puts action
+			fork {self.send(action, @paths)}
 		end
 	end
 
