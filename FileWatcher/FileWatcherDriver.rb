@@ -121,5 +121,7 @@ OPTIONS:
 
 end
 
-fw = FileWatcherDriver.new
-fw.runActions
+if __FILE__ == $0
+	fw = FileWatcherDriver.new
+	fw.runActions
+end
