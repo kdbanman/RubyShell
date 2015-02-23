@@ -1,6 +1,6 @@
-require '../contracted.rb'
-require './TimerContracts.rb'
-require './delayc.so'
+require './contracted.rb'
+require './TimeDelay/TimerContracts.rb'
+require './TimeDelay/delayc.so'
 
 class TimeDelay < Contracted
 

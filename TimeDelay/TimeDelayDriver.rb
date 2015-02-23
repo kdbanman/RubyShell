@@ -1,6 +1,6 @@
-require '../contracted.rb'
-require './TimerContracts.rb'
-require './TimeDelay'
+require './contracted.rb'
+require './TimeDelay/TimerContracts.rb'
+require './TimeDelay/TimeDelay'
 require 'getoptlong'
 
 class TimeDelayDriver < Contracted
@@ -43,7 +43,7 @@ class TimeDelayDriver < Contracted
 					-n <nanoseconds>
 					-m <msg to print>
 					eof
-
+					exit(0)
 					when '-s'
 						@seconds = arg.to_i
 

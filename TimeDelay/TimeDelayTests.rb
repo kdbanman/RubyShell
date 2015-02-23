@@ -1,7 +1,7 @@
 gem "minitest"
 require 'minitest/autorun'
-require '../contracted.rb'
-require './TimeDelay.rb'
+require './contracted.rb'
+require './TimeDelay/TimeDelay.rb'
 
 
 class TimeDelayTests < Minitest::Test
