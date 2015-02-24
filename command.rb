@@ -43,6 +43,27 @@ class Command < Contracted
   # post @in and @out are closed unless they are $std*
   def execute
 
+    redirect_io do
+      if runnable
+        runnable.call(*@args)
+      else
+        pid = fork do
+          begin
+            exec @program, *@args
+          rescue Errno::ENOENT => e
+            puts e.to_s
+          rescue Errno::EACCES => e
+            puts e.to_s
+          end
+
+        end
+        Process.wait pid unless @is_background
+      end
+    end
+
+  end
+
+  def redirect_io
     unless @out == $stdout
       orig_stdout = $stdout.clone
       $stdout.reopen(@out)
@@ -55,17 +76,16 @@ class Command < Contracted
       @in.close
     end
 
-    if runnable
-      runnable.call(*@args)
-    else
-      pid = fork do
-        exec @program, *@args
-      end
-      Process.wait pid unless @is_background
+    begin
+      yield
+    rescue Interrupt
+      $stdin.reopen(orig_stdin) unless @in == $stdin
+      $stdout.reopen(orig_stdout) unless @out == $stdout
+      raise
     end
 
-    $stdin.reopen(orig_stdin) unless @out = $stdout
-    $stdout.reopen(orig_stdout) unless @in == $stdin
+    $stdin.reopen(orig_stdin) unless @in == $stdin
+    $stdout.reopen(orig_stdout) unless @out == $stdout
 
   end
 

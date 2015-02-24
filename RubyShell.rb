@@ -31,6 +31,11 @@ class RubyShell < Contracted
         execute(cmdline)
       rescue ContractFailure => fail
         puts fail.msg
+      rescue Errno::ENOENT => e
+        puts :deeebug
+        puts e.to_s
+      rescue Errno::EACCES => e
+        puts e.to_s
       end
 		end
 	end
@@ -79,8 +84,14 @@ class RubyShell < Contracted
   # pre none
   # post returns either string or nil, string trimmed of whitespace
 	def get_cmdline
-    #TODO catch ctrl c and IOexception (see Readline website)
-    cmdline = Readline.readline("+> ", true)
+    #TODO catch IOexception (see Readline website)
+    begin
+      cmdline = Readline.readline("+> ", true)
+    rescue Interrupt => e
+      puts "^C"
+      cmdline = ""
+    end
+
     exit if cmdline == nil
 
     cmdline.strip
@@ -94,12 +105,14 @@ class RubyShell < Contracted
     raw_pipeline = parse_pipeline(cmdline)
     cmd_pipeline = construct_pipeline(raw_pipeline)
 
-    #TODO catch ENOENT, EACCES.  all sortsa files.  cd.  bad exec calls...
-    cmd_pipeline.each do |command|
-      command.execute
+    begin
+      cmd_pipeline.each do |command|
+        command.execute
+      end
+    rescue Interrupt => e
+      puts ""
     end
 
-    # TODO see Kernel::trap() for ctrl+c & others
   end
 
 	# takes a line of command input and returns an array split on pipe characters
@@ -138,7 +151,7 @@ class RubyShell < Contracted
 		end
 
 		pipeline
-	end
+  end
 
   #################################################
   ################### CONTRACTS ###################
@@ -166,9 +179,6 @@ class RubyShell < Contracted
           !(tmp =~ / >>?\s+[^\s]+/)
         end
     )
-
-    #TODO output redirection to file (> or >>) follows all commands
-    #TODO output redirection to file (> or >>) precedes optional backgrounder (&)
 
     arrayStrings = Contract.new(
         "param must be array of strings",
@@ -226,8 +236,6 @@ class RubyShell < Contracted
           result.is_a?(Array) && !(result.any? { |val| !val.is_a?(Command)})
         end
     )
-
-    #TODO commands each has .in.eof? true and .out.eof? false
 
     addPostcondition(:builtin?, trueFalse)
 
