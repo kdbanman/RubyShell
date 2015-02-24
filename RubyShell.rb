@@ -74,12 +74,28 @@ class RubyShell < Contracted
 
     add_builtin('export', Proc.new do |args|
                           var, value = args.split('=')
-                          ENV[var] = value
+                          if var.is_a?(String) && value.is_a?(String)
+                            ENV[Shellwords.escape(var)] = Shellwords.escape(value)
+                          else
+                            puts "Invalid export input: #{args}\nUse \"export var=value\""
+                          end
                         end)
 
-    add_builtin('cd', Proc.new { |dir| Dir.chdir(dir) })
+    add_builtin('cd', Proc.new do |dir|
+                      if dir.is_a?(String)
+                        begin
+                          Dir.chdir(dir)
+                        rescue SystemCallError => e
+                          puts "Cannot change directory to #{dir}"
+                          puts e.message
+                        end
+                      end
+                    end)
 
-    add_builtin('exit', Proc.new { |status = 0| exit(status.to_i) })
+    add_builtin('exit', Proc.new do |status|
+                        status = 0 unless status.is_a? Integer
+                        exit(status)
+                      end)
   end
 
 	# gets a line of raw, unexpanded shell commands.
