@@ -13,6 +13,7 @@ class CommandParser < Contracted
   # pre takes string
   # post returns string
   def substitute_vars(raw)
+    raw.sub!(' ~', ' ' + ENV['HOME'] + '') if ENV['HOME']
     ENV.each { |var, val| raw.gsub!(Regexp.new(' \$' + var), ' ' + val) }
 
     raw
