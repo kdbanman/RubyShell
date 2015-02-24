@@ -35,6 +35,15 @@ class CommandParser < Contracted
     instream = $stdin
     outstream = $stdout
 
+    raw.match(/ (>>?)\s+([^\s]+)/) do |redirection|
+      mode = redirection[1] == ">>" ? "a+" : "w+"
+      file = redirection[2]
+
+      outstream = File.new(file, mode)
+    end
+
+    raw = raw.sub(/ >>?\s+[^\s]+/, '').strip
+
     [raw, instream, outstream]
   end
 
@@ -63,7 +72,6 @@ class CommandParser < Contracted
         "input string must have zero or one file redirect operations",
         Proc.new do |raw|
           tmp = raw.sub(/ >>?\s+[^\s]+/, '')
-          puts tmp
           !(tmp =~ / >>?\s+[^\s]+/)
         end
     )
