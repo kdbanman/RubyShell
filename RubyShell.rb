@@ -132,8 +132,6 @@ class RubyShell < Contracted
   # post returns array of Commands, each has .in.eof? true and .out.eof? false
   #      each command is tainted
 	def construct_pipeline(raw_pipeline)
-    #debug
-    puts raw_pipeline
 		pipeline = raw_pipeline.collect do |raw_cmd|
       if builtin? raw_cmd
         cmd = Command.new(raw_cmd, get_builtin(raw_cmd))

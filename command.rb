@@ -63,6 +63,9 @@ class Command < Contracted
 
   end
 
+  # redirects IO temporarily from stdin and stdout to chosen IO streams
+  # pre @in and @out must be readable and writable
+  # post none
   def redirect_io
     unless @out == $stdout
       orig_stdout = $stdout.clone
@@ -95,6 +98,14 @@ class Command < Contracted
 
 
   def addPreconditions
+    ioStreams = Contract.new(
+        "input and output of command must be streams",
+        Proc.new do |result|
+          (@in.respond_to?(:read)) && (@out.respond_to?(:write))
+        end
+    )
+
+    addPrecondition(:redirect_io, ioStreams)
 
     #addPrecondition(:execute, safeMode)
   end

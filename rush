@@ -3,5 +3,5 @@
 require './RubyShell'
 require './contracted'
 
-shell = RubyShell.new
+shell = ContractRunner.new(RubyShell.new)
 shell.run
