@@ -17,29 +17,7 @@ class RubyShell < Contracted
     addPostconditions
     addInvariants
 
-    @builtins = Hash.new
-  end
-
-  # tests if program is a builtin
-  # pre program is a string containing no whitespace
-  # post returns true or false
-  def builtin?(program)
-    @builtins.has_key?(program.strip)
-  end
-
-  # registers a builtin program
-  # pre program is a string containing no whitespace
-  #     runnable is a lambda proc taking the arguments for the builtin
-  # post none
-  def add_builtin(program, runnable)
-    @builtins.store(program, runnable)
-  end
-
-  # returns a runnable proc corrensponding to the program
-  # pre program is o string containing no whitespace
-  # post returns a proc or nil
-  def get_builtin(program)
-    @builtins[program]
+    add_builtins
   end
 
 	# main shell REPL
@@ -58,6 +36,43 @@ class RubyShell < Contracted
 	end
 
 	private
+
+  # tests if program is a builtin
+  # pre program is a string containing no whitespace
+  # post returns true or false
+  def builtin?(raw)
+    program = Shellwords.shellsplit(raw)[0].strip
+    @builtins.has_key?(program)
+  end
+
+  # registers a builtin program
+  # pre program is a string containing no whitespace
+  #     runnable is a lambda proc taking the arguments for the builtin
+  # post none
+  def add_builtin(program, runnable)
+    @builtins.store(program.strip, runnable)
+  end
+
+  # returns a runnable proc corresponding to the program
+  # pre program is o string containing no whitespace
+  # post returns a proc or nil
+  def get_builtin(raw)
+    program = Shellwords.shellsplit(raw)[0].strip
+    @builtins[program]
+  end
+
+  def add_builtins
+    @builtins = Hash.new
+
+    add_builtin('export', Proc.new do |args|
+                          var, value = args.split('=')
+                          ENV[var] = value
+                        end)
+
+    add_builtin('cd', Proc.new { |dir| Dir.chdir(dir) })
+
+    add_builtin('exit', Proc.new { |status = 0| exit(status.to_i) })
+  end
 
 	# gets a line of raw, unexpanded shell commands.
 	# may contain pipes, output redirection, etc.
@@ -79,6 +94,7 @@ class RubyShell < Contracted
     raw_pipeline = parse_pipeline(cmdline)
     cmd_pipeline = construct_pipeline(raw_pipeline)
 
+    #TODO catch ENOENT, EACCES.  all sortsa files.  cd.  bad exec calls...
     cmd_pipeline.each do |command|
       command.execute
     end
