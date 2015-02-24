@@ -100,22 +100,24 @@ class Contracted
 end
 
 class ContractFailure < StandardError
-    
-    alias_method :set_backtrace_old, :set_backtrace
 
-    def initialize(msg)
-        super "\n" + msg + "\n"
-    end
+  attr_reader :msg
+  alias_method :set_backtrace_old, :set_backtrace
 
-    def set_backtrace(backtrace)
-        #TODO this is fragile.  it should reliably remove all contracted.rb
-        #elements of the backtrace, regardless of contracted.rb filename...
-        trimmed_backtrace = backtrace.delete_if do |s|
-            s.include? "contracted.rb" 
-        end
-        set_backtrace_old(trimmed_backtrace)
-        #set_backtrace_old(backtrace)
+  def initialize(msg)
+    super "\n" + msg + "\n"
+    @msg = msg
+  end
+
+  def set_backtrace(backtrace)
+    #TODO this is fragile.  it should reliably remove all contracted.rb
+    #elements of the backtrace, regardless of contracted.rb filename...
+    trimmed_backtrace = backtrace.delete_if do |s|
+      s.include? "contracted.rb"
     end
+    set_backtrace_old(trimmed_backtrace)
+    #set_backtrace_old(backtrace)
+  end
 end
 
 class ContractRunner < BasicObject

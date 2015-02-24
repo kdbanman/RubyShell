@@ -48,9 +48,12 @@ class RubyShell < Contracted
 	def run
 
 		loop do
-      #TODO catch ContractFailure
-			cmdline = get_cmdline() # may exit program
-			execute(cmdline)
+      begin
+        cmdline = get_cmdline() # may exit program
+        execute(cmdline)
+      rescue ContractFailure => fail
+        puts fail.msg
+      end
 		end
 	end
 
@@ -102,10 +105,12 @@ class RubyShell < Contracted
 	def construct_pipeline(raw_pipeline)
 		pipeline = raw_pipeline.collect do |raw_cmd|
       if builtin? raw_cmd
-        Command.new(raw_cmd, get_builtin(raw_cmd))
+        cmd = Command.new(raw_cmd, get_builtin(raw_cmd))
       else
-        Command.new(raw_cmd)
+        cmd = Command.new(raw_cmd)
       end
+
+      ContractRunner.new(cmd)
     end
 
 		# leave first command input and last command output alone. i.e. as

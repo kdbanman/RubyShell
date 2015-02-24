@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
-require './RubyShell.rb'
+require './RubyShell'
+require './contracted'
 
 shell = RubyShell.new
 shell.run
