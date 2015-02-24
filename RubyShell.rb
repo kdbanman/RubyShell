@@ -122,7 +122,7 @@ class RubyShell < Contracted
   #     output redirection to file (> or >>) precedes optional backgrounder (&)
   # post returns array of strings
 	def parse_pipeline(cmdline)
-		cmdline.scan( /([^"'|]+)|["']([^"']+)["']/ ).flatten.compact.collect { |cmd| cmd.strip }
+		cmdline.scan( /(?:".*?\"|[^|])+/ ).flatten.compact.collect { |cmd| cmd.strip }
 	end
 
 	# takes an array of command strings and maps them to an array of Commands
@@ -132,6 +132,8 @@ class RubyShell < Contracted
   # post returns array of Commands, each has .in.eof? true and .out.eof? false
   #      each command is tainted
 	def construct_pipeline(raw_pipeline)
+    #debug
+    puts raw_pipeline
 		pipeline = raw_pipeline.collect do |raw_cmd|
       if builtin? raw_cmd
         cmd = Command.new(raw_cmd, get_builtin(raw_cmd))
