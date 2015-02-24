@@ -2,7 +2,7 @@ require 'readline'
 require './contracted'
 require './command'
 
-class RubyShell
+class RubyShell < Contracted
 
 	private
 
