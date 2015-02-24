@@ -36,6 +36,9 @@ class RubyShell < Contracted
         puts e.to_s
       rescue Errno::EACCES => e
         puts e.to_s
+      rescue IOError => e
+        puts "Illegal stdin state!"
+        exit 1
       end
 		end
 	end
